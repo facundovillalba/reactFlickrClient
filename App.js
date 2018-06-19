@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, ImageBackground, View,FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image,Text, ImageBackground, View,FlatList, TouchableOpacity } from 'react-native';
+import { List, ListItem } from "react-native-elements";
 
 const baseURL = 'https://api.flickr.com/services/rest/?format=json&nojsoncallback=1';
 const APIKey = '5da3b1261f4b9ba6e92143b48e065a3c';
@@ -7,65 +8,68 @@ const params = `&api_key=${APIKey}`;
 const requestURL = baseURL + params;
 
 export default class App extends React.Component {
-
   constructor(){
     super()
     this.state = {
+      pictureUrl: '',
       userSets: []
     };
     this.getSets('37107167@N07');
+    this.getProfilePicture('37107167@N07');
   }
-
-  addHeaders() {
-    return options = { headers: { "Content-Type": "application/json" }}
+  getProfilePicture(userId){
+    let method = 'flickr.people.getInfo';
+    let url = `${requestURL}&user_id=${userId}&method=${method}`;
+    fetch(url).then((res) => res.json()).then((jsonRes) => this.handleGetProfilePictureResponse(jsonRes));
+  }
+  handleGetProfilePictureResponse(res) {
+    //TODO error handling
+    let picture = `http://farm${res.person.iconfarm}.staticflickr.com/${res.person.iconserver}/buddyicons/${res.person.nsid}.jpg`;
+    console.log(picture);
+    this.setState({ pictureUrl: picture })
   }
   getSets(userId){
     let method = 'flickr.photosets.getList';
     let primary_photo_extras = 'url_m';
     let url = `${requestURL}&user_id=${userId}&method=${method}&primary_photo_extras=${primary_photo_extras}`;
-    console.log(url);
-    return fetch(url).then((res) => res.json()).then((jsonRes) => this.handleResponse(jsonRes));
+    return fetch(url).then((res) => res.json()).then((jsonRes) => this.handleGetSetsResponse(jsonRes));
   }
-  handleResponse(res) {
-    console.log(Object.keys(res.photosets.photoset));
-    console.log(res.photosets.photoset[0].id);
-    console.log(res.photosets.photoset[0].primary_photo_extras.url_m);
+  handleGetSetsResponse(res) {
+    //TODO error handling
     this.setState({ userSets: res.photosets.photoset })
   }
 
   renderSeparator = () => {
     return (
-      <View style={styles.separator} />
+      <ListSpearator/>
     );
   };
-//
+
   render() {
     return (
       <View style={styles.container}>
-        <Text>Dane Pedersen</Text>
-        <Text>Seguidores Siguiendo</Text>
-        <FlatList  
-            style={styles.list}           
-            ItemSeparatorComponent={this.renderSeparator}
-            data={this.state.userSets}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => (
+        <User pictureUrl ={this.state.pictureUrl}> </User>
+        <List containerStyle={styles.list}> 
+          <FlatList                    
+              ItemSeparatorComponent={this.renderSeparator}
+              keyExtractor={item => item.id}
+              data={this.state.userSets}
+              renderItem={({item}) => (
                 <FlickrSet 
-                  title = {item.title._content}
-                  description = {item.description._content}
-                  photos = {item.photos}
-                  count_views = {item.count_views}
-                  primary_photo_url = {item.primary_photo_extras.url_m}
+                    title = {item.title._content}
+                    description = {item.description._content}
+                    photos = {item.photos}
+                    count_views = {item.count_views}
+                    primary_photo_url = {item.primary_photo_extras.url_m}
                 />
               )}
-        />
+          />
+        </List>
       </View>
     );
   }
 }
-//<Image source={albumPic} style={{width: 193, height: 110}}/>
-//<Image source={this.props.primary_photo_url} style={{width: 193, height: 110}}/>
-//<Text>{props.description}</Text>
+
 class FlickrSet extends React.Component{
 
   _onPress = () => {
@@ -74,58 +78,96 @@ class FlickrSet extends React.Component{
   render() {
     return (
       <TouchableOpacity onPress={this._onPress}>
-        <View style={styles.item}>
-          <ImageBackground 
-              source={{uri:this.props.primary_photo_url}}
-              resizeMode='cover'
-              style={styles.imgBackground}
-          >
-              <Text>{this.props.title} {"\n"}
-              {"\n"}
-              {"\n"}
-              {"\n"}
-              {"\n"}
-              {"\n"}
-              {"\n"}
-              {"\n"}
-              {this.props.photos} photos {this.props.count_views} views
-              </Text>
-          </ImageBackground>
-        </View>
-      </TouchableOpacity>
+          <View>
+            <ImageBackground 
+                source={{uri:this.props.primary_photo_url}}
+                resizeMode='cover'
+                style={styles.imgBackground}>
+                <ListItem
+                    containerStyle={styles.item}                         
+                    title={this.props.title}
+                    subtitle={`${this.props.photos} photos ${this.props.count_views} views`}
+                />
+            </ImageBackground>
+          </View>
+      </TouchableOpacity>      
     );
   }
 }
+//
+function User(props) {
+  return (
+    <View style={styles.user}>
+            <Image source={{uri:props.pictureUrl}} style={styles.userPicture} />
+            <ImageBackground 
+              source={{uri:'https://fthmb.tqn.com/FBpHXbP87H8YNyf52tDDtMjDmVo=/768x0/filters:no_upscale():max_bytes(150000):strip_icc()/flickr-logo-56a7edbb3df78cf7729accd4.png'}}
+              resizeMode='center'
+              style={styles.imgBackground}>
+                    <Text style={styles.username}>Dane Pedersen</Text>
+          </ImageBackground>
+    </View>
+  );
+}
+function ListSpearator(props) {
+  return (
+    <View style={styles.separator} />
+  );
+}
 const styles = StyleSheet.create({
 
-  container: {
-    marginTop: "8%",    
-    marginLeft: "5%",
-    marginRight: "5%",
-    marginTop: "5%",  
+  container: {     
     flex: 1,
     justifyContent: "center",
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     backgroundColor: "#F5FCFF"
   },
+  user: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    flex: 1,
+    height: "20%",
+    alignSelf: 'flex-start',
+    marginTop: "5%",
+    marginLeft: "5%",
+  },
+  username: {
+    marginTop: "35%",
+    justifyContent: 'flex-start',
+    alignSelf: 'flex-start',
+    fontWeight: 'bold',
+    fontSize: 20,
+  },
   list : {
-    alignSelf: 'stretch',
     height: "80%",
+    alignItems: 'stretch',
   },
   item: { 
-    alignSelf: 'stretch',       
+    flex: 1,
+    alignSelf: 'stretch',
+    //TODO ver de hacer el resize porcentual
+    height: 220,
   },
   separator: {
     height: 1,    
     width: "98%",
     alignSelf: "center",
-    //alignItems: 'stretch',
     backgroundColor: "#CED0CE",
   }, 
   imgBackground: {
     width: '100%',
     height: '100%',
     flex: 1 
+  },
+  userPicture: {
+    borderWidth:1,
+    borderColor:'rgba(0,0,0,0.2)',
+    alignItems:'center',
+    justifyContent:'center',
+    width:80,
+    height:80,
+    backgroundColor:'#fff',
+    borderRadius:100,
 },
 
 });
@@ -168,4 +210,22 @@ class FlickrImage extends React.Component {
     );
   }
 }
+
+
+<TouchableOpacity onPress={this._onPress}>
+        <View style={styles.item}>
+          <ImageBackground 
+              source={{uri:this.props.primary_photo_url}}
+              resizeMode='cover'
+              style={styles.imgBackground}>
+              <Text>{this.props.title} </Text>
+              <Text>{this.props.photos} photos {this.props.count_views} views</Text>              
+          </ImageBackground>
+        </View>
+      </TouchableOpacity>
+
+
+
+
+      
 */
