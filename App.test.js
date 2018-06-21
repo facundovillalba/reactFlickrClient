@@ -1,9 +1,9 @@
 import React from 'react';
-import App from './App';
+import UserSetsView from './src/app/UserSetsView.js';
 
 import renderer from 'react-test-renderer';
 
 it('renders without crashing', () => {
-  const rendered = renderer.create(<App />).toJSON();
+  const rendered = renderer.create(<UserSetsView />).toJSON();
   expect(rendered).toBeTruthy();
 });
