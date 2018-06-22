@@ -46,15 +46,21 @@ export default class PhotosListView extends React.Component {
     }
     return data;
   };
-  //style={styles.item}
-  //<Text style={styles.photoName}>{item.title}</Text>
-  renderItem = ({ item, index }) => {
+
+  _onPress = (item) => {
+    console.log(item)
+    this.props.navigation.navigate('PhotoDetail', {
+      photo: item,
+    });
+  };
+
+  renderItem = ({ item, index }) => {    
     if (item.empty === true) {
       return <View style={[styles.item, styles.itemInvisible]} />;
     }
     return (
       <View style={styles.container}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => this._onPress(item)}>
           <ImageBackground
             source={{ uri: item.url_m }}
             resizeMode='cover'
