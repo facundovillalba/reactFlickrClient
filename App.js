@@ -10,9 +10,16 @@ const RootStack = createStackNavigator(
     },
     {
         initialRouteName: 'UserSetsView',
-        navigationOptions:{ 
-            header: null
-        }
+        navigationOptions: {
+            headerStyle: {
+              backgroundColor: '#000',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            headerMode: 'screen',
+          },        
     });
   
 export default class App extends React.Component {
